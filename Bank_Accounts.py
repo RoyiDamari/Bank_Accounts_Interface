@@ -218,9 +218,7 @@ def reports_interface() -> None:
                     except ValueError as e:
                         print(f"Error: {e}. Please try again.");
             case "5":
-                sorted_accounts: list[tuple[int, dict[str, any]]] = sorted(bank_accounts.items(),
-                                                                           key=lambda x: x[1]["balance"]);
-                for account_number, account in sorted_accounts:
+                for account_number, account in sorted(bank_accounts.items(), key=lambda x: x[1]["balance"]):
                     print_account_details(account_number);
 
             case "6":
