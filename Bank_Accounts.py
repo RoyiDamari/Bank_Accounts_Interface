@@ -361,28 +361,3 @@ def open_new_account() -> None:
         except ValueError as e:
             print(f"Error: {e}. Please enter valid information and try again.");
 
-
-# Main loop to display the menu and process user selections
-try:
-    while True:
-        option: str = print_menu();
-
-        match option:
-            case "1":
-                add_transaction();
-            case "2":
-                execute_transactions(due_only=False);
-            case "3":
-                execute_transactions(due_only=True);
-            case "4":
-                reports_interface();
-            case "5":
-                open_new_account();
-            case "6":
-                print("Exiting the system.");
-                break;
-            case _:
-                print("Invalid option. Please try again.");
-
-except KeyboardInterrupt:
-    print("\nProgram interrupted by user. Exiting.");
