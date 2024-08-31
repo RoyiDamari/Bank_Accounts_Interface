@@ -352,7 +352,7 @@ def test_execute_transactions_basic_execution():
         }
     };
 
-    transaction_input: list[str] = ["1002", "EX"];
+    transaction_input: list[str] = ["1002"];
 
     with patch('builtins.input', side_effect=transaction_input):
         accounts: dict[int, dict[str, any]] = bk.execute_transactions(accounts);
@@ -385,7 +385,7 @@ def test_execute_transactions_due_only():
         }
     };
 
-    transaction_input: list[str] = ["1002", "EX"];
+    transaction_input: list[str] = ["1002"];
 
     with patch('builtins.input', side_effect=transaction_input):
         accounts: dict[int, dict[str, any]] = bk.execute_transactions(accounts, due_only=True);
@@ -418,7 +418,7 @@ def test_execute_transactions_invalid_account_number_no_transactions_to_execute(
         }
     };
 
-    transaction_input: list[str] = ["9999", "1002", "EX"];  # First invalid account, then valid
+    transaction_input: list[str] = ["9999", "1002"];  # First invalid account, then valid
 
     with patch('builtins.input', side_effect=transaction_input):
         accounts: dict[int, dict[str, any]] = bk.execute_transactions(accounts);
@@ -452,7 +452,7 @@ def test_execute_transactions_future_transactions_due():
         }
     };
 
-    transaction_input: list[str] = ["1002", "EX"];
+    transaction_input: list[str] = ["1002"];
 
     with patch('builtins.input', side_effect=transaction_input):
         accounts: dict[int, dict[str, any]] = bk.execute_transactions(accounts, due_only=True);
@@ -469,6 +469,39 @@ def test_execute_transactions_future_transactions_due():
     assert accounts[1003]["balance"] == 3600.75;
     assert len(accounts[1002]["transaction_history"]) == 1;
     assert accounts[1002]["transactions_to_execute"] == [];
+
+
+def test_execute_transactions_exit():
+    # Arrange
+    accounts: dict[int, dict[str, any]] = {
+        1002: {
+            "first_name": "Bob",
+            "last_name": "Johnson",
+            "id_number": "987654321",
+            "balance": 1500.00,
+            "transactions_to_execute": [("2024-08-01 12:00:00", "2024-11-20 12:00:00", 1002, 1003, 100.00)],
+            "transaction_history": []
+        },
+        1003: {
+            "first_name": "Charlie",
+            "last_name": "Brown",
+            "id_number": "555555555",
+            "balance": 3500.75,
+            "transactions_to_execute": [],
+            "transaction_history": []
+        }
+    };
+
+    transaction_input: list[str] = ["EX"];
+
+    with patch('builtins.input', side_effect=transaction_input):
+        accounts: dict[int, dict[str, any]] = bk.execute_transactions(accounts, due_only=True);
+
+    # Assert
+    assert accounts[1002]["balance"] == 1500.00;  # Balance should remain the same
+    assert accounts[1003]["balance"] == 3500.75;  # Balance should remain the same
+    assert len(accounts[1002]["transaction_history"]) == 0;  # No transactions should be executed
+    assert len(accounts[1002]["transactions_to_execute"]) == 1;  # Transaction should remain in queue
 
 
 # Tests for print_account_details function
