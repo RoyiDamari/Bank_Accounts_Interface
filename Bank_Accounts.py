@@ -1,44 +1,59 @@
 from datetime import datetime, date
 
-# Sample initial data for three accounts
-# The bank_accounts dictionary holds all accounts with unique account numbers as keys.
-# Each account is represented as a dictionary containing the account holder's information,
-# balance, pending transactions, and transaction history.
-bank_accounts: dict[int, [str, any]] = {
-    1001: {
-        "first_name": "Alice",
-        "last_name": "Smith",
-        "id_number": "123456789",
-        "balance": 2500.50,
-        "transactions_to_execute": [
-            ("2024-08-17 14:00:00", "2024-08-18 14:00:00", 1001, 1002, 300),
-            ("2024-08-17 15:00:00", "2024-08-19 15:00:00", 1001, 1003, 200)
-        ],
-        "transaction_history": [
-            ("2024-08-15 09:00:00", "2024-08-15 09:30:00", 1001, 1002, 500, "2024-08-15 09:30:00")
-        ]
-    },
-    1002: {
-        "first_name": "Bob",
-        "last_name": "Johnson",
-        "id_number": "987654321",
-        "balance": 1500.00,
-        "transactions_to_execute": [],
-        "transaction_history": []
-    },
-    1003: {
-        "first_name": "Charlie",
-        "last_name": "Brown",
-        "id_number": "555555555",
-        "balance": 3500.75,
-        "transactions_to_execute": [],
-        "transaction_history": []
-    }
-}
+
+# Function to initialize the bank accounts data structure
+def init_interface() -> dict[int, dict[str, any]]:
+    """
+       Initializes the bank accounts data structure with some predefined accounts.
+
+       Returns:
+           dict[int, dict[str, any]]: A dictionary representing bank accounts,
+           where the key is the account number and the value is another dictionary
+           containing account details.
+    """
+
+    return {
+        1001: {
+            "first_name": "Alice",
+            "last_name": "Smith",
+            "id_number": "123456789",
+            "balance": 2500.50,
+            "transactions_to_execute": [
+                ("2024-08-17 14:00:00", "2024-08-18 14:00:00", 1001, 1002, 300),
+                ("2024-08-17 15:00:00", "2024-08-19 15:00:00", 1001, 1003, 200)
+            ],
+            "transaction_history": [
+                ("2024-08-15 09:00:00", "2024-08-15 09:30:00", 1001, 1002, 500, "2024-08-15 09:30:00")
+            ]
+        },
+        1002: {
+            "first_name": "Bob",
+            "last_name": "Johnson",
+            "id_number": "987654321",
+            "balance": 1500.00,
+            "transactions_to_execute": [],
+            "transaction_history": []
+        },
+        1003: {
+            "first_name": "Charlie",
+            "last_name": "Brown",
+            "id_number": "555555555",
+            "balance": 3500.75,
+            "transactions_to_execute": [],
+            "transaction_history": []
+        }
+    };
 
 
-# Function to display the main menu and get user selection
+# Function to print the main menu and get user's selection
 def print_menu() -> str:
+    """
+       Prints the main menu of the banking system and prompts the user for a selection.
+
+       Returns:
+           str: The user's selected menu option.
+    """
+
     print("\n--- Banking System Menu ---");
     print("1. Add a new transaction");
     print("2. Execute all pending transactions");
@@ -49,148 +64,249 @@ def print_menu() -> str:
     return input("Select an option (1-6): ");
 
 
-# Function to add a new transaction
-def add_transaction() -> None:
+# Function to validate the account number
+def account_validation_check(account_number: str, accounts: dict[int, dict[str, any]]) -> int | None:
+    """
+        Validates whether the provided account number exists in the accounts dictionary.
+
+        Args:
+            account_number (str): The account number provided by the user.
+            accounts (dict): The dictionary containing all accounts.
+
+        Returns:
+            int | None: The validated account number or None if 'EX' is typed.
+
+        Raises:
+            ValueError: If the account number does not exist in the accounts.
+    """
+
+    if account_number.upper() == 'EX':
+        return;
+    account_number: int = int(account_number);
+    if account_number not in accounts:
+        raise ValueError("Source or target account number does not exist.");
+    else:
+        return account_number;
+
+
+# Function to validate the amount to be transferred
+def amount_validation_check(amount: str, account_number: int, accounts: dict[int, dict[str, any]]) -> float | None:
+    """
+        Validates the amount entered for a transaction to ensure it's positive and doesn't exceed the balance.
+
+        Args:
+            amount (str): The amount to be validated.
+            account_number (int): The source account number.
+            accounts (dict): The dictionary containing all accounts.
+
+        Returns:
+            float | None: The validated amount as a float or None if 'EX' is typed.
+
+        Raises:
+            ValueError: If the amount is not positive or exceeds the available balance.
+    """
+
+    if amount.upper() == 'EX':
+        return;
+    amount: float = float(amount);
+    if amount <= 0:
+        raise ValueError("The amount must be a positive number.");
+    elif amount > accounts[account_number]["balance"]:
+        raise ValueError(f"The amount exceeds the available balance. "
+                         f"You can transfer up to {accounts[account_number]['balance']:.2f}.");
+    else:
+        return amount;
+
+
+# Function to validate the date/time for future transactions
+def date_validation_check(future_date: str) -> datetime | None:
+    """
+       Validates whether the provided future date is in the correct format and is in the future.
+
+       Args:
+           future_date (str): The date string to validate.
+
+       Returns:
+           datetime | None: The validated future datetime or None if 'EX' is typed.
+
+       Raises:
+           ValueError: If the date is not in the future or not in the correct format.
+    """
+
+    if future_date.upper() == 'EX':
+        return;
+    future_date: datetime = datetime.strptime(future_date, "%Y-%m-%d %H:%M:%S");
+    if future_date < datetime.now():
+        raise ValueError("The time entered must be in the future.");
+    else:
+        return future_date;
+
+
+# Function to add a new transaction to the accounts
+def add_transaction(accounts: dict[int, dict[str, any]]) -> dict[int, dict[str, any]]:
+    """
+       Adds a new transaction to the accounts' transaction queue.
+
+       Args:
+           accounts (dict): The dictionary containing all accounts.
+
+       Returns:
+           dict: The updated accounts dictionary after the transaction is added.
+    """
+
     print("\n--- Add a New Transaction ---");
 
-    # Get a valid source account number from the user
     while True:
-        source_account = input("Enter source account number (or type 'EX' to return to the main menu): ");
-        if source_account.upper() == 'EX':
-            return;
+        source_account: str = input("Enter source account number (or type 'EX' to return to the main menu): ");
         try:
-            source_account = int(source_account);
-            if source_account not in bank_accounts:
-                raise ValueError("Source account number does not exist.");
+            source_account_number: int | None = account_validation_check(source_account, accounts);
+            if source_account_number is None:
+                return accounts;
             break;
         except ValueError as e:
-            print(f"Invalid source account number: {e}. Please try again.");
+            print(f"Invalid source account number: {e} Please try again.");
 
-    # Get a valid target account number from the user
     while True:
-        target_account = input("Enter target account number (or type 'EX' to return to the main menu): ");
-        if target_account.upper() == 'EX':
-            return;
+        target_account: str = input("Enter target account number (or type 'EX' to return to the main menu): ");
         try:
-            target_account = int(target_account);
-            if target_account not in bank_accounts:
-                raise ValueError("Target account number does not exist.");
+            target_account_number: int | None = account_validation_check(target_account, accounts);
+            if target_account_number is None:
+                return accounts;
+            if target_account_number == source_account_number:
+                print("The source and target account numbers cannot be the same. "
+                      "Please enter a different target account number.");
+                continue;
             break;
         except ValueError as e:
-            print(f"Invalid target account number: {e}. Please try again.");
+            print(f"Invalid target account number: {e} Please try again.");
 
-    # Get a valid transfer amount from the user
     while True:
-        amount = input("Enter amount to transfer (or type 'EX' to return to the main menu): ");
-        if amount.upper() == 'EX':
-            return;
+        amount_input: str = input("Enter amount to transfer (or type 'EX' to return to the main menu): ");
         try:
-            amount = float(amount);
-            if amount <= 0:
-                raise ValueError("The amount must be a positive number.");
-            if amount > bank_accounts[source_account]["balance"]:
-                raise ValueError(f"The amount exceeds the available balance. "
-                                 f"You can transfer up to {bank_accounts[source_account]['balance']}.");
+            amount: float | None = amount_validation_check(amount_input, source_account_number, accounts);
+            if amount is None:
+                return accounts;
             break;
         except ValueError as e:
-            print(f"Invalid amount: {e}. Please enter a valid positive number.");
+            print(f"Invalid amount: {e} Please enter a valid positive number.");
 
-    # Get the current time as the transaction creation time
     creation_time: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S");
 
-    # Get a valid future time for transaction execution
     while True:
-        future_time = input("Enter the future time for execution (YYYY-MM-DD HH:MM:SS) "
-                            "or type 'EX' to return to the main menu: ");
-        if future_time.upper() == 'EX':
-            return;
+        future_time: str = input("Enter the future time for execution (YYYY-MM-DD HH:MM:SS) "
+                                 "or type 'EX' to return to the main menu: ");
         try:
-            future_datetime: datetime = datetime.strptime(future_time, "%Y-%m-%d %H:%M:%S");
-            if future_datetime < datetime.now():
-                raise ValueError("The time entered must be in the future.");
+            future_time: datetime | None = date_validation_check(future_time);
+            if future_time is None:
+                return accounts;
+            future_datetime: str = future_time.strftime("%Y-%m-%d %H:%M:%S");
             break;
         except ValueError as e:
             print(f"Invalid datetime format or past date: {e}. Please try again.");
 
-    # Create the transaction tuple and add it to the source account's pending transactions
-    transaction: tuple[str, str, int, int, float] = (creation_time, future_time, source_account,
-                                                     target_account, amount);
-    bank_accounts[source_account]["transactions_to_execute"].append(transaction);
+    transaction: tuple[str, str, int, int, float] = (creation_time, future_datetime, source_account_number,
+                                                     target_account_number, amount);
+    accounts[source_account_number]["transactions_to_execute"].append(transaction)
     print("Transaction added successfully.");
+    return accounts;
 
 
-# Function to execute transactions for a given account
-# If due_only is True, only transactions that are due (future time <= now) will be executed
-def execute_transactions(due_only: bool = False) -> None:
-    # Get a valid account number from the user
+# Function to execute pending or due transactions
+def execute_transactions(accounts: dict[int, dict[str, any]], due_only: bool = False) -> dict[int, dict[str, any]]:
+    """
+       Executes transactions for a specific account, either all or only those due.
+
+       Args:
+           accounts (dict): The dictionary containing all accounts.
+           due_only (bool): Whether to execute only transactions that are due (default is False).
+
+       Returns:
+           dict: The updated accounts dictionary after executing the transactions.
+    """
+
     while True:
-        source_account = input("Enter the account number to execute transactions "
-                               "(or type 'EX' to return to the main menu): ");
-        if source_account.upper() == 'EX':
-            return;
+        source_account: str = input("Enter the account number to execute transactions "
+                                    "(or type 'EX' to return to the main menu): ");
         try:
-            source_account = int(source_account);
-            if source_account not in bank_accounts:
-                raise ValueError("Account number does not exist");
+            source_account_number: int | None = account_validation_check(source_account, accounts);
+            if source_account_number is None:
+                return accounts;
             break;
         except ValueError as e:
-            print(f"Error: {e}. Please enter a valid account number.");
+            print(f"Error: {e} Please enter a valid account number.");
 
-    # Get the list of transactions to execute and the transaction history for the account
-    transactions_to_execute: list[tuple[any]] = bank_accounts[source_account][
+    transactions_to_execute: list[tuple[str, str, int, int, float]] = accounts[source_account_number][
         "transactions_to_execute"];
-    transaction_history: list[tuple[any]] = bank_accounts[source_account][
+    transaction_history: list[tuple[str, str, int, int, float, str]] = accounts[source_account_number][
         "transaction_history"];
 
-    executed_any: bool = False;  # Track whether any transactions were executed
+    executed_any: bool = False;
 
-    # Iterate through a copy of the transactions to avoid modifying the list during iteration
     for transaction in transactions_to_execute[:]:
         creation_time, future_time_str, source, target, amount = transaction;
 
-        # Check if the transaction is due for execution (only if due_only is True)
         if due_only:
-            future_time = datetime.strptime(future_time_str, "%Y-%m-%d %H:%M:%S");
+            future_time: datetime = datetime.strptime(future_time_str, "%Y-%m-%d %H:%M:%S");
             if future_time > datetime.now():
-                continue;  # Skip transactions that are not yet due
+                continue;
 
-        # Update the account balances
-        bank_accounts[source]["balance"] -= amount;
-        bank_accounts[target]["balance"] += amount;
+        accounts[source]["balance"] -= amount;
+        accounts[target]["balance"] += amount;
 
-        # Record the execution time and add the transaction to the account's history
-        execution_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S");
-        executed_transaction: tuple[any, str] = transaction + (execution_time,);
+        execution_time: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S");
+        executed_transaction: tuple[str, str, int, int, float, str] = transaction + (execution_time,)
         transaction_history.append(executed_transaction);
 
-        # Remove the executed transaction from the pending transactions
         transactions_to_execute.remove(transaction);
 
-        # Print details of the executed transaction
         print(f"Executed transaction: {executed_transaction}");
         executed_any = True;
 
-    # Print a message if no transactions were executed
     if not executed_any:
         print("No transactions were executed.");
     else:
-        # Print the account details after executing the transactions
-        print_account_details(source_account);
+        print_account_details(accounts, source_account_number);
+    return accounts;
 
 
-# Function to print details of a specific account
-def print_account_details(account_number: int) -> None:
-    account: dict[str, any] = bank_accounts.get(account_number);
+# Function to print account details
+def print_account_details(accounts: dict[int, dict[str, any]], account_number: int) -> None:
+    """
+        Prints the details of a specific account.
+
+        Args:
+            accounts (dict): The dictionary containing all accounts.
+            account_number (int): The account number to print details for.
+
+        Returns:
+            None
+    """
+
+    account: dict[str, any] = accounts.get(account_number);
     if not account:
-        print(f"No account found with account number {account_number}");
+        print(f"No account found with account number {account_number}.");
     else:
         print(f"\nAccount {account_number} details:");
         for key, value in account.items():
-            print(f"{key}: {value}");
+            if key == "balance":
+                # Format the balance to always show two decimal places
+                print(f"{key}: {value:.2f}");
+            else:
+                print(f"{key}: {value}");
 
 
-# Function to display various reports based on user selection
-def reports_interface() -> None:
+# Function to handle various reports related to accounts
+def reports_interface(accounts: dict[int, dict[str, any]]) -> None:
+    """
+        Provides an interface to generate various reports on bank accounts.
+
+        Args:
+            accounts (dict): The dictionary containing all accounts.
+
+        Returns:
+            None
+    """
+
     while True:
         print("\n--- Reports Menu: ---");
         print("1. Print all bank accounts details");
@@ -208,104 +324,92 @@ def reports_interface() -> None:
 
         match option_menu:
             case "1":
-                # Print details of all bank accounts
                 print("\nAll bank accounts:");
-                for account_number in bank_accounts:
-                    print_account_details(account_number);
+                for account_number in accounts:
+                    print_account_details(accounts, account_number);
 
             case "2":
-                # Print account details for a specific account number
                 while True:
-                    account_number = input("Enter account number (or type 'EX' to return to the main menu): ");
-                    if account_number.upper() == 'EX':
-                        break;
+                    account_number_input: str = input("Enter account number (or type 'EX' to return to the main menu): ")
                     try:
-                        account_number = int(account_number);
-                        if account_number not in bank_accounts:
-                            raise ValueError("Account number does not exist.");
+                        account_number: int | None = account_validation_check(account_number_input, accounts)
+                        if account_number is None:
+                            break;
+                        print_account_details(accounts, account_number);
                         break;
                     except ValueError as e:
-                        print(f"Error: {e}. Please enter a valid account number.");
-                print_account_details(account_number);
+                        print(f"Error: {e} Please enter a valid account number.");
 
             case "3":
-                # Print account details based on ID number
                 while True:
-                    id_number = input("Enter ID number (or type 'EX' to return to the main menu): ");
+                    id_number: str = input("Enter ID number (or type 'EX' to return to the main menu): ");
                     if id_number.upper() == 'EX':
                         break;
                     try:
                         found: bool = False;
-                        for account_number, account in bank_accounts.items():
+                        for account_number, account in accounts.items():
                             if account["id_number"] == id_number:
-                                print_account_details(account_number);
+                                print_account_details(accounts, account_number);
                                 found = True;
                         if not found:
                             raise ValueError("ID number does not exist.");
                         break;
                     except ValueError as e:
-                        print(f"Error: {e}. Please try again.");
+                        print(f"Error: {e} Please try again.");
             case "4":
-                # Print account details based on first name
                 while True:
                     first_name = input("Enter first name (or type 'EX' to return to the main menu): ").lower();
                     if first_name.upper() == 'EX':
                         break;
                     try:
                         found: bool = False;
-                        for account_number, account in bank_accounts.items():
+                        for account_number, account in accounts.items():
                             if first_name in account["first_name"].lower():
-                                print_account_details(account_number);
+                                print_account_details(accounts, account_number);
                                 found = True;
                         if not found:
                             raise ValueError("First name does not exist in any account.");
                         break;
                     except ValueError as e:
-                        print(f"Error: {e}. Please try again.");
+                        print(f"Error: {e} Please try again.");
 
             case "5":
-                # Print all accounts sorted by balance
-                for account_number, account in sorted(bank_accounts.items(), key=lambda x: x[1]["balance"]):
-                    print_account_details(account_number);
+                for account_number, account in sorted(accounts.items(), key=lambda x: x[1]["balance"]):
+                    print_account_details(accounts, account_number);
 
             case "6":
-                # Print the transaction history for all accounts
                 print("\nAll transaction history:");
-                transactions: list[tuple[any]] = [];
-                for account in bank_accounts.values():
+                transactions: list[tuple[str, str, int, int, float, str]] = [];
+                for account in accounts.values():
                     transactions.extend(account["transaction_history"]);
                 for transaction in sorted(transactions, key=lambda x: x[0], reverse=True):
                     print(transaction);
 
             case "7":
-                # Print today's transactions across all accounts
                 today: str = date.today().strftime("%Y-%m-%d");
-                transactions: list[tuple[any]] = [];
+                transactions: list[tuple[str, str, int, int, float, str]] = [];
                 print(f"\nTransactions for today ({today}):");
-                for account in bank_accounts.values():
+                for account in accounts.values():
                     transactions.extend(account["transaction_history"]);
                 for transaction in transactions:
                     if transaction[0].startswith(today):
                         print(transaction);
 
             case "8":
-                # Print accounts with a negative balance
                 print("\nAccounts with negative balance:");
                 found_negative_balance: bool = False;
-                for account_number, account in bank_accounts.items():
+                for account_number, account in accounts.items():
                     if account["balance"] < 0:
-                        print_account_details(account_number);
+                        print_account_details(accounts, account_number);
                         found_negative_balance = True;
                 if not found_negative_balance:
                     print("No account with negative balance was found.");
 
             case "9":
-                # Print the total sum of all account balances
-                total_balance: float = sum(account["balance"] for account in bank_accounts.values());
+                total_balance: float = sum(account["balance"] for account in accounts.values());
                 print(f"\nTotal balance of all accounts: {total_balance}");
 
             case "10":
-                # Exit the reports interface and return to the main menu
                 print("Returning to main menu.");
                 break;
 
@@ -313,51 +417,73 @@ def reports_interface() -> None:
                 print("Invalid option. Please try again.");
 
 
-# Function to open a new account
-def open_new_account() -> None:
+# Function to open a new bank account
+def open_new_account(accounts: dict[int, dict[str, any]]) -> dict[int, dict[str, any]]:
+    """
+       Opens a new bank account by collecting user input for account details.
+
+       Args:
+           accounts (dict): The dictionary containing all accounts.
+
+       Returns:
+           dict: The updated accounts dictionary after the new account is added.
+    """
+
     print("\n--- Open a New Account ---");
-    # Generate a new account number by incrementing the maximum existing account number
-    account_number: int = max(bank_accounts.keys()) + 1;
+    account_number: int = max(accounts.keys()) + 1;
 
     while True:
         try:
             first_name: str = input("Enter first name (or type 'EX' to return to the main menu): ");
             if first_name.upper() == 'EX':
-                return;
+                return accounts;
             if not first_name.isalpha():
                 raise ValueError("First name should only contain letters.");
-
-            last_name: str = input("Enter last name (or type 'EX' to return to the main menu): ");
-            if last_name.upper() == 'EX':
-                return;
-            if not last_name.isalpha():
-                raise ValueError("Last name should only contain letters.");
-
-            id_number: str = input("Enter ID number (or type 'EX' to return to the main menu): ");
-            if id_number.upper() == 'EX':
-                return;
-            if not id_number.isdigit():
-                raise ValueError("ID number should only contain digits.");
-
-            balance = input("Enter initial balance (or type 'EX' to return to the main menu): ");
-            if balance.upper() == 'EX':
-                return;
-
-            balance = float(balance);
-            if balance < 0:
-                raise ValueError("Initial balance cannot be negative.");
-
-            # Add the new account to the bank_accounts dictionary
-            bank_accounts[account_number]: dict[str, any] = {
-                "first_name": first_name,
-                "last_name": last_name,
-                "id_number": id_number,
-                "balance": balance,
-                "transactions_to_execute": [],
-                "transaction_history": []
-            }
-            print(f"New account created successfully with account number {account_number}.");
-
+            break;  # Exit the loop if the input is valid
         except ValueError as e:
             print(f"Error: {e}. Please enter valid information and try again.");
 
+    while True:
+        try:
+            last_name: str = input("Enter last name (or type 'EX' to return to the main menu): ");
+            if last_name.upper() == 'EX':
+                return accounts;
+            if not last_name.isalpha():
+                raise ValueError("Last name should only contain letters.");
+            break;  # Exit the loop if the input is valid
+        except ValueError as e:
+            print(f"Error: {e}. Please enter valid information and try again.");
+
+    while True:
+        try:
+            id_number: str = input("Enter ID number (or type 'EX' to return to the main menu): ");
+            if id_number.upper() == 'EX':
+                return accounts;
+            if not id_number.isdigit():
+                raise ValueError("ID number should only contain digits.");
+            break;  # Exit the loop if the input is valid
+        except ValueError as e:
+            print(f"Error: {e}. Please enter valid information and try again.");
+
+    while True:
+        try:
+            balance = input("Enter initial balance (or type 'EX' to return to the main menu): ");
+            if balance.upper() == 'EX':
+                return accounts;
+            balance = float(balance);
+            if balance < 0:
+                raise ValueError("Initial balance cannot be negative.");
+            break;  # Exit the loop if the input is valid
+        except ValueError as e:
+            print(f"Error: {e}. Please enter valid information and try again.");
+
+    accounts[account_number] = {
+        "first_name": first_name,
+        "last_name": last_name,
+        "id_number": id_number,
+        "balance": balance,
+        "transactions_to_execute": [],
+        "transaction_history": []
+    }
+    print(f"New account created successfully with account number {account_number}.");
+    return accounts;
