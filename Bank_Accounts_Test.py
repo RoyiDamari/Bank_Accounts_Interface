@@ -270,7 +270,6 @@ def test_add_transaction_exit_on_source_account():
         }
     };
 
-    # Mock inputs
     transaction_input: list[str] = ["EX"]; # Simulate the user typing "EX" to exit
 
     with patch('builtins.input', side_effect=transaction_input):
@@ -301,7 +300,6 @@ def test_add_transaction_after_multiple_invalid_inputs():
         }
     };
 
-    # Mock inputs
     transaction_input: list[str] = [
         "999",  # Invalid source account
         "1002",  # Valid source account
@@ -354,7 +352,6 @@ def test_execute_transactions_basic_execution():
         }
     };
 
-    # Mock inputs
     transaction_input: list[str] = ["1002", "EX"];
 
     with patch('builtins.input', side_effect=transaction_input):
@@ -388,7 +385,6 @@ def test_execute_transactions_due_only():
         }
     };
 
-    # Mock inputs
     transaction_input: list[str] = ["1002", "EX"];
 
     with patch('builtins.input', side_effect=transaction_input):
@@ -422,7 +418,6 @@ def test_execute_transactions_invalid_account_number_no_transactions_to_execute(
         }
     };
 
-    # Mock inputs
     transaction_input: list[str] = ["9999", "1002", "EX"];  # First invalid account, then valid
 
     with patch('builtins.input', side_effect=transaction_input):
@@ -457,7 +452,6 @@ def test_execute_transactions_future_transactions_due():
         }
     };
 
-    # Mock inputs
     transaction_input: list[str] = ["1002", "EX"];
 
     with patch('builtins.input', side_effect=transaction_input):
