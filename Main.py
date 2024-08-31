@@ -1,23 +1,25 @@
 import Bank_Accounts as bk
 
 
-def main():
+def main() -> None:
     # Main loop to display the menu and process user selections
+    accounts = bk.init_interface();
+
     try:
         while True:
             option: str = bk.print_menu();
 
             match option:
                 case "1":
-                    bk.add_transaction();
+                    accounts = bk.add_transaction(accounts);
                 case "2":
-                    bk.execute_transactions(due_only=False);
+                    accounts = bk.execute_transactions(accounts, due_only=False);
                 case "3":
-                    bk.execute_transactions(due_only=True);
+                    accounts = bk.execute_transactions(accounts, due_only=True);
                 case "4":
-                    bk.reports_interface();
+                    bk.reports_interface(accounts);
                 case "5":
-                    bk.open_new_account();
+                    accounts = bk.open_new_account(accounts);
                 case "6":
                     print("Exiting the system.");
                     break;
